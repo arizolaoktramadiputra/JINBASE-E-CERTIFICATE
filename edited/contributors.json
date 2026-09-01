@@ -1,0 +1,19 @@
+{
+  "contributors": [
+    {
+      "name": "Andini Putri",
+      "email": "andini.putri@example.com",
+      "contribution_type": "money"
+    },
+    {
+      "name": "Bagas Saputra",
+      "email": "bagas.saputra@example.com",
+      "contribution_type": "merchandise"
+    },
+    {
+      "name": "Citra Dewi",
+      "email": "citra.dewi@example.com",
+      "contribution_type": "money"
+    }
+  ]
+}

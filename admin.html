@@ -1,0 +1,1971 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Owner Portal — JINBASE BTS JIN PROJECT</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  
+  <style>
+    /* ============================================================
+       DESIGN SYSTEM & CSS VARIABLES
+       ============================================================ */
+    :root {
+      --bg-dark: #070103;
+      --bg-surface: #120307;
+      --bg-card: rgba(26, 6, 12, 0.7);
+      --bg-card-hover: rgba(38, 10, 18, 0.85);
+      --border-subtle: rgba(212, 175, 55, 0.18);
+      --border-glow: rgba(212, 175, 55, 0.45);
+      
+      --gold-primary: #D4AF37;
+      --gold-light: #F3E5AB;
+      --gold-dark: #997A15;
+      
+      --crimson-primary: #C41E3A;
+      --crimson-hover: #9E1027;
+      --crimson-deep: #5A0816;
+      
+      --text-main: #FFFFFF;
+      --text-muted: rgba(255, 255, 255, 0.65);
+      --text-dim: rgba(255, 255, 255, 0.4);
+      
+      --success: #10B981;
+      --success-bg: rgba(16, 185, 129, 0.15);
+      --danger: #EF4444;
+      --danger-bg: rgba(239, 68, 68, 0.15);
+      --info: #3B82F6;
+      
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --radius-full: 9999px;
+      
+      --shadow-ambient: 0 10px 40px rgba(0, 0, 0, 0.6);
+      --shadow-gold: 0 0 25px rgba(212, 175, 55, 0.2);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(196, 30, 58, 0.12) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(212, 175, 55, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(18, 3, 7, 0.8) 0%, #070103 100%);
+      color: var(--text-main);
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.5;
+    }
+
+    /* Typography */
+    h1, h2, h3, .serif-heading {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    /* Ambient Background Glow */
+    .ambient-glow {
+      position: fixed;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+      filter: blur(120px);
+    }
+    .glow-1 { top: -200px; left: -100px; background: rgba(196, 30, 58, 0.18); }
+    .glow-2 { bottom: -200px; right: -100px; background: rgba(212, 175, 55, 0.12); }
+
+    /* Container */
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ============================================================
+       VIEW 1: LOGIN SECTION
+       ============================================================ */
+    #view-login {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 440px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-radius: var(--radius-lg);
+      padding: 2.5rem 2rem;
+      box-shadow: var(--shadow-ambient), var(--shadow-gold);
+      text-align: center;
+      position: relative;
+      animation: fadeInScale 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .login-logo {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 64px;
+      height: 64px;
+      border-radius: var(--radius-full);
+      background: linear-gradient(135deg, rgba(196, 30, 58, 0.3), rgba(212, 175, 55, 0.3));
+      border: 1px solid var(--border-glow);
+      margin-bottom: 1.25rem;
+      font-size: 1.75rem;
+      box-shadow: 0 0 20px rgba(212, 175, 55, 0.25);
+    }
+
+    .login-title {
+      font-size: 2rem;
+      color: var(--text-main);
+      margin-bottom: 0.25rem;
+    }
+
+    .login-subtitle {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      margin-bottom: 2rem;
+    }
+
+    .immutable-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: rgba(212, 175, 55, 0.12);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      color: var(--gold-light);
+      padding: 0.2rem 0.6rem;
+      border-radius: var(--radius-full);
+      font-size: 0.72rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+    }
+
+    .form-group {
+      text-align: left;
+      margin-bottom: 1.25rem;
+      position: relative;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 0.4rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .form-input, .form-select {
+      width: 100%;
+      background: rgba(10, 2, 4, 0.8);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 0.75rem 1rem;
+      font-size: 0.95rem;
+      color: #fff;
+      font-family: inherit;
+      transition: all 0.2s ease;
+      outline: none;
+    }
+
+    .form-input:focus, .form-select:focus {
+      border-color: var(--gold-primary);
+      box-shadow: 0 0 12px rgba(212, 175, 55, 0.3);
+      background: rgba(18, 3, 7, 0.95);
+    }
+
+    .form-input[readonly] {
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--gold-light);
+      cursor: not-allowed;
+      border-color: rgba(212, 175, 55, 0.2);
+    }
+
+    .password-toggle {
+      position: absolute;
+      right: 0.75rem;
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      font-size: 1.1rem;
+      padding: 0.25rem;
+      transition: color 0.2s;
+    }
+    .password-toggle:hover {
+      color: var(--text-main);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.8rem 1.5rem;
+      border-radius: var(--radius-md);
+      font-size: 0.9rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      border: none;
+      outline: none;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--crimson-primary) 0%, #8E0A1E 100%);
+      color: #fff;
+      box-shadow: 0 4px 15px rgba(196, 30, 58, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      width: 100%;
+    }
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #d82b49 0%, var(--crimson-primary) 100%);
+      box-shadow: 0 6px 20px rgba(196, 30, 58, 0.6);
+      transform: translateY(-1px);
+    }
+
+    .btn-gold {
+      background: linear-gradient(135deg, var(--gold-primary) 0%, #B8860B 100%);
+      color: #0d0206;
+      font-weight: 700;
+      box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+    }
+    .btn-gold:hover {
+      background: linear-gradient(135deg, #E5C158 0%, var(--gold-primary) 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 22px rgba(212, 175, 55, 0.45);
+    }
+
+    .btn-ghost {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-muted);
+    }
+    .btn-ghost:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: #fff;
+    }
+    .btn-danger:hover {
+      background: #dc2626;
+    }
+
+    .btn-sm {
+      padding: 0.45rem 0.85rem;
+      font-size: 0.8rem;
+      border-radius: var(--radius-sm);
+    }
+
+    .login-footer-links {
+      margin-top: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.82rem;
+    }
+    .login-footer-links a {
+      color: var(--gold-light);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .login-footer-links a:hover {
+      color: #fff;
+      text-decoration: underline;
+    }
+
+    /* ============================================================
+       VIEW 2: MAIN DASHBOARD
+       ============================================================ */
+    #view-dashboard {
+      display: none;
+      padding-bottom: 4rem;
+    }
+
+    /* Top Navbar */
+    .admin-navbar {
+      background: rgba(14, 3, 7, 0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border-subtle);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 0.85rem 0;
+    }
+
+    .nav-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+    }
+
+    .brand-crest {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-full);
+      background: linear-gradient(135deg, var(--crimson-primary), var(--gold-primary));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      box-shadow: 0 0 12px rgba(212, 175, 55, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .brand-title {
+      font-size: 1.35rem;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .owner-pill {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      background: linear-gradient(90deg, rgba(212, 175, 55, 0.2), rgba(196, 30, 58, 0.2));
+      border: 1px solid var(--gold-primary);
+      color: var(--gold-light);
+      padding: 0.15rem 0.5rem;
+      border-radius: var(--radius-full);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.25rem;
+      margin: 2rem 0;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      backdrop-filter: blur(16px);
+      position: relative;
+      overflow: hidden;
+      transition: all 0.25s ease;
+    }
+    .stat-card:hover {
+      border-color: var(--border-glow);
+      background: var(--bg-card-hover);
+      transform: translateY(-2px);
+    }
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--gold-primary), var(--crimson-primary));
+      opacity: 0.8;
+    }
+
+    .stat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-bottom: 0.75rem;
+    }
+    .stat-icon {
+      font-size: 1.4rem;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .stat-caption {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      margin-top: 0.4rem;
+    }
+
+    /* Main Table Section */
+    .table-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      backdrop-filter: blur(20px);
+      overflow: hidden;
+      box-shadow: var(--shadow-ambient);
+    }
+
+    .table-toolbar {
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    .toolbar-search {
+      flex: 1;
+      min-width: 260px;
+      max-width: 420px;
+      position: relative;
+    }
+
+    .toolbar-search input {
+      padding-left: 2.4rem;
+    }
+
+    .search-icon-inside {
+      position: absolute;
+      left: 0.85rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-dim);
+      pointer-events: none;
+      font-size: 0.95rem;
+    }
+
+    .toolbar-filters {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    /* Custom Table Styling */
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.875rem;
+    }
+
+    th {
+      background: rgba(10, 2, 4, 0.9);
+      padding: 0.85rem 1.25rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      vertical-align: middle;
+      color: var(--text-main);
+    }
+
+    tbody tr {
+      transition: background 0.15s ease;
+    }
+    tbody tr:hover {
+      background: rgba(212, 175, 55, 0.04);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.25rem 0.6rem;
+      border-radius: var(--radius-full);
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .badge-money {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      color: #34D399;
+    }
+    .badge-merch {
+      background: rgba(212, 175, 55, 0.15);
+      border: 1px solid rgba(212, 175, 55, 0.35);
+      color: var(--gold-light);
+    }
+
+    .code-pill {
+      font-family: monospace;
+      font-size: 0.82rem;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 0.2rem 0.5rem;
+      border-radius: var(--radius-sm);
+      color: var(--gold-light);
+      letter-spacing: 0.04em;
+    }
+
+    .table-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .btn-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-sm);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.9rem;
+      text-decoration: none;
+    }
+    .btn-icon:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+    .btn-icon.delete:hover {
+      background: var(--danger-bg);
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    /* Table Pagination */
+    .table-pagination {
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .pagination-buttons {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    /* ============================================================
+       MODAL DIALOGS
+       ============================================================ */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      animation: fadeIn 0.2s ease;
+    }
+    .modal-backdrop.active {
+      display: flex;
+    }
+
+    .modal-dialog {
+      width: 100%;
+      max-width: 520px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-glow);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-ambient), 0 0 35px rgba(212, 175, 55, 0.25);
+      overflow: hidden;
+      animation: modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .modal-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-title {
+      font-size: 1.4rem;
+      color: var(--text-main);
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-size: 1.4rem;
+      cursor: pointer;
+      line-height: 1;
+      padding: 0.2rem;
+      transition: color 0.2s;
+    }
+    .modal-close:hover {
+      color: #fff;
+    }
+
+    .modal-body {
+      padding: 1.5rem;
+      max-height: 75vh;
+      overflow-y: auto;
+    }
+
+    .modal-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      background: rgba(7, 1, 3, 0.5);
+    }
+
+    /* Live Preview Box in Modal */
+    .cert-preview-box {
+      background: rgba(212, 175, 55, 0.06);
+      border: 1px dashed var(--border-glow);
+      border-radius: var(--radius-md);
+      padding: 1rem;
+      margin-top: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Segmented Control */
+    .segmented-control {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      background: rgba(10, 2, 4, 0.9);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 0.25rem;
+      gap: 0.25rem;
+      margin-bottom: 1rem;
+    }
+    .segment-option {
+      text-align: center;
+      padding: 0.6rem;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      transition: all 0.2s;
+      user-select: none;
+    }
+    .segment-option.active {
+      background: linear-gradient(135deg, var(--crimson-primary), #8E0A1E);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(196, 30, 58, 0.4);
+    }
+
+    /* ============================================================
+       TOAST NOTIFICATIONS
+       ============================================================ */
+    #toast-container {
+      position: fixed;
+      top: 1.5rem;
+      right: 1.5rem;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      pointer-events: none;
+    }
+
+    .toast {
+      pointer-events: auto;
+      min-width: 280px;
+      max-width: 380px;
+      background: rgba(18, 3, 7, 0.95);
+      border: 1px solid var(--border-glow);
+      backdrop-filter: blur(16px);
+      border-radius: var(--radius-md);
+      padding: 0.85rem 1.15rem;
+      color: #fff;
+      font-size: 0.875rem;
+      box-shadow: var(--shadow-ambient), 0 0 20px rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      animation: toastIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: all 0.2s;
+    }
+
+    .toast.success { border-color: var(--success); }
+    .toast.error { border-color: var(--danger); }
+    .toast.info { border-color: var(--gold-primary); }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes fadeInScale {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    @keyframes modalSlideUp {
+      from { opacity: 0; transform: translateY(20px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateX(50px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .nav-brand .brand-title { font-size: 1.1rem; }
+      .stats-grid { grid-template-columns: 1fr; }
+      .table-toolbar { flex-direction: column; align-items: stretch; }
+      .toolbar-search { max-width: 100%; }
+      .login-card { padding: 2rem 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Ambient background glow elements -->
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+
+  <!-- Toast Container -->
+  <div id="toast-container"></div>
+
+  <!-- ============================================================
+       VIEW 1: OWNER LOGIN
+       ============================================================ -->
+  <section id="view-login">
+    <div class="login-card">
+      <div class="login-logo">👑</div>
+      
+      <span class="immutable-badge">🔒 Akun Pemilik Sistem</span>
+      <h1 class="login-title">JINBASE Indonesia</h1>
+      <p class="login-subtitle">Panel Khusus Pemilik &amp; Manajemen Donatur</p>
+
+      <form id="form-login">
+        <div class="form-group">
+          <label class="form-label" for="login-username">Username (Tetap)</label>
+          <div class="input-wrapper">
+            <input
+              type="text"
+              id="login-username"
+              class="form-input"
+              value="jinbase.owner"
+              readonly
+              autocomplete="username"
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="login-password">Password Pemilik</label>
+          <div class="input-wrapper">
+            <input
+              type="password"
+              id="login-password"
+              class="form-input"
+              placeholder="Masukkan password Anda…"
+              required
+              autocomplete="current-password"
+            />
+            <button type="button" class="password-toggle" id="btn-toggle-pwd" aria-label="Toggle password visibility">👁️</button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="btn-submit-login" style="margin-top: 0.5rem;">
+          <span class="btn-text">Masuk ke Dashboard</span>
+        </button>
+
+        <div class="login-footer-links">
+          <a href="#" id="link-forgot-pwd">🔑 Lupa Password?</a>
+          <a href="/" target="_blank">🌐 Web Publik &rarr;</a>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       VIEW 2: OWNER DASHBOARD
+       ============================================================ -->
+  <section id="view-dashboard">
+    <!-- Navbar -->
+    <nav class="admin-navbar">
+      <div class="container nav-content">
+        <div class="nav-brand">
+          <div class="brand-crest">✨</div>
+          <div>
+            <div class="brand-title">
+              JINBASE Owner Panel
+              <span class="owner-pill">👑 jinbase.owner</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="nav-actions">
+          <button class="btn btn-gold btn-sm" id="btn-open-add-modal">
+            <span>+</span> Tambah Donatur
+          </button>
+          <button class="btn btn-ghost btn-sm" id="btn-open-security-modal" title="Pengaturan Keamanan Akun">
+            ⚙️ Keamanan
+          </button>
+          <a href="/" class="btn btn-ghost btn-sm" target="_blank" title="Buka Halaman Pencarian Publik">
+            🔍 Web Publik
+          </a>
+          <button class="btn btn-danger btn-sm" id="btn-logout" title="Keluar dari sesi ini">
+            🚪 Keluar
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Container -->
+    <main class="container">
+      <!-- Stats Cards -->
+      <section class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-header">
+            <span>Total Donatur Terdaftar</span>
+            <span class="stat-icon">👥</span>
+          </div>
+          <div class="stat-value" id="stat-total-donors">0</div>
+          <div class="stat-caption">Tersimpan di database &amp; verifikasi aktif</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-header">
+            <span>Total Donasi Dana</span>
+            <span class="stat-icon">💰</span>
+          </div>
+          <div class="stat-value" id="stat-total-funds" style="color: #34D399;">Rp 0</div>
+          <div class="stat-caption" id="stat-total-money-count">0 donatur via transfer uang</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-header">
+            <span>Donasi Merchandise</span>
+            <span class="stat-icon">🎁</span>
+          </div>
+          <div class="stat-value" id="stat-total-merch" style="color: var(--gold-light);">0</div>
+          <div class="stat-caption">Paket &amp; merchandise kontribusi</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-header">
+            <span>Sinkronisasi Database</span>
+            <span class="stat-icon">⚡</span>
+          </div>
+          <div class="stat-value" style="font-size: 1.25rem; color: #60A5FA; line-height: 2.2rem;">
+            Real-Time Sync
+          </div>
+          <div class="stat-caption">Langsung aktif tanpa restart server</div>
+        </div>
+      </section>
+
+      <!-- Table Section -->
+      <section class="table-section">
+        <!-- Toolbar -->
+        <div class="table-toolbar">
+          <div class="toolbar-search">
+            <span class="search-icon-inside">🔍</span>
+            <input
+              type="text"
+              id="table-search-input"
+              class="form-input"
+              placeholder="Cari nama, email, ID, atau kode verifikasi…"
+            />
+          </div>
+
+          <div class="toolbar-filters">
+            <select id="filter-type" class="form-select" style="width: auto; padding-right: 2rem;">
+              <option value="all">Semua Kontribusi</option>
+              <option value="money">💰 Donasi Uang</option>
+              <option value="merchandise">🎁 Merchandise</option>
+            </select>
+
+            <select id="sort-order" class="form-select" style="width: auto;">
+              <option value="id_desc">ID Terbaru</option>
+              <option value="id_asc">ID Terlama</option>
+              <option value="name_asc">Nama (A-Z)</option>
+              <option value="amount_desc">Nominal Terbesar</option>
+            </select>
+
+            <button class="btn btn-ghost btn-sm" id="btn-refresh-table" title="Muat Ulang Data">
+              🔄 Segarkan
+            </button>
+
+            <button class="btn btn-ghost btn-sm" id="btn-export-json" title="Export database JSON">
+              📥 Export
+            </button>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 70px;">ID</th>
+                <th>Donatur</th>
+                <th>Jenis Kontribusi</th>
+                <th>Nominal (Rp)</th>
+                <th>Kode Verifikasi</th>
+                <th style="text-align: right; width: 140px;">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="contributors-tbody">
+              <tr>
+                <td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                  Memuat data donatur dari database…
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="table-pagination">
+          <div id="pagination-info">Menampilkan 0 dari 0 donatur</div>
+          <div class="pagination-buttons">
+            <button class="btn btn-ghost btn-sm" id="btn-prev-page" disabled>&larr; Sebelumnya</button>
+            <span id="pagination-current-page" style="padding: 0 0.5rem; font-weight: 600; color: #fff;">1 / 1</span>
+            <button class="btn btn-ghost btn-sm" id="btn-next-page" disabled>Berikutnya &rarr;</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </section>
+
+  <!-- ============================================================
+       MODAL 1: TAMBAH DONATUR BARU
+       ============================================================ -->
+  <div class="modal-backdrop" id="modal-add-contributor">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">✨ Tambah Donatur Baru</h3>
+        <button class="modal-close" data-close="modal-add-contributor">&times;</button>
+      </div>
+
+      <form id="form-add-contributor">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="add-name">Nama Lengkap Donatur *</label>
+            <input type="text" id="add-name" class="form-input" placeholder="Contoh: Kim Seokjin" required />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="add-email">Email Donatur *</label>
+            <input type="email" id="add-email" class="form-input" placeholder="Contoh: seokjin@bts.com" required />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Jenis Kontribusi *</label>
+            <div class="segmented-control">
+              <div class="segment-option active" data-type="money" id="seg-add-money">💰 Donasi Uang</div>
+              <div class="segment-option" data-type="merchandise" id="seg-add-merch">🎁 Merchandise</div>
+            </div>
+            <input type="hidden" id="add-type" value="money" />
+          </div>
+
+          <div class="form-group" id="group-add-amount">
+            <label class="form-label" for="add-amount">Nominal Donasi (Rupiah) *</label>
+            <input type="text" id="add-amount" class="form-input" placeholder="Contoh: 100000" />
+            <small style="color: var(--text-dim); font-size: 0.75rem; margin-top: 0.25rem; display: block;" id="add-amount-preview">
+              Format: Rp 0
+            </small>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="add-custom-id">ID Donatur (Otomatis jika dikosongkan)</label>
+            <input type="text" id="add-custom-id" class="form-input" placeholder="Otomatis mengikuti nomor urut" />
+          </div>
+
+          <div class="cert-preview-box">
+            <div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">Pratinjau Kode Verifikasi</div>
+              <div class="code-pill" id="add-code-preview" style="font-size: 0.95rem; margin-top: 0.2rem;">JB-XXXX-XXXX</div>
+            </div>
+            <span style="font-size: 1.5rem;">📜</span>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost btn-sm" data-close="modal-add-contributor">Batal</button>
+          <button type="submit" class="btn btn-gold btn-sm" id="btn-save-add">
+            Simpan ke Database
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL 2: EDIT DONATUR
+       ============================================================ -->
+  <div class="modal-backdrop" id="modal-edit-contributor">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">✏️ Edit Data Donatur</h3>
+        <button class="modal-close" data-close="modal-edit-contributor">&times;</button>
+      </div>
+
+      <form id="form-edit-contributor">
+        <input type="hidden" id="edit-id" />
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="edit-name">Nama Lengkap Donatur *</label>
+            <input type="text" id="edit-name" class="form-input" required />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="edit-email">Email Donatur *</label>
+            <input type="email" id="edit-email" class="form-input" required />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Jenis Kontribusi *</label>
+            <div class="segmented-control">
+              <div class="segment-option" data-type="money" id="seg-edit-money">💰 Donasi Uang</div>
+              <div class="segment-option" data-type="merchandise" id="seg-edit-merch">🎁 Merchandise</div>
+            </div>
+            <input type="hidden" id="edit-type" value="money" />
+          </div>
+
+          <div class="form-group" id="group-edit-amount">
+            <label class="form-label" for="edit-amount">Nominal Donasi (Rupiah) *</label>
+            <input type="text" id="edit-amount" class="form-input" />
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost btn-sm" data-close="modal-edit-contributor">Batal</button>
+          <button type="submit" class="btn btn-gold btn-sm" id="btn-save-edit">
+            Simpan Perubahan
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL 3: PENGATURAN KEAMANAN & PASSWORD
+       ============================================================ -->
+  <div class="modal-backdrop" id="modal-security">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">🔐 Keamanan Akun Pemilik</h3>
+        <button class="modal-close" data-close="modal-security">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Info Akun -->
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1.5rem;">
+          <div style="font-size: 0.78rem; color: var(--text-dim); text-transform: uppercase;">Username Pemilik</div>
+          <div style="font-size: 1.1rem; font-weight: 700; color: var(--gold-light); margin-top: 0.2rem;">
+            jinbase.owner <span class="badge badge-merch" style="font-size: 0.65rem; margin-left: 0.4rem;">Permanen / Tidak Berubah</span>
+          </div>
+        </div>
+
+        <!-- Ganti Password -->
+        <form id="form-change-password">
+          <h4 style="font-size: 1rem; margin-bottom: 1rem; color: #fff;">🔑 Ganti Password</h4>
+          
+          <div class="form-group">
+            <label class="form-label" for="pwd-current">Password Saat Ini *</label>
+            <input type="password" id="pwd-current" class="form-input" placeholder="Masukkan password lama…" required />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="pwd-new">Password Baru * (Min 6 Karakter)</label>
+            <input type="password" id="pwd-new" class="form-input" placeholder="Masukkan password baru…" required minlength="6" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="pwd-confirm">Konfirmasi Password Baru *</label>
+            <input type="password" id="pwd-confirm" class="form-input" placeholder="Ulangi password baru…" required minlength="6" />
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-sm" style="width: 100%; margin-top: 0.5rem;">
+            Perbarui Password
+          </button>
+        </form>
+
+        <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.08); margin: 1.5rem 0;" />
+
+        <!-- Master Recovery Key -->
+        <div>
+          <h4 style="font-size: 1rem; margin-bottom: 0.5rem; color: #fff;">🛡️ Master Recovery Key</h4>
+          <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+            Kunci ini digunakan untuk mereset password secara langsung jika Anda lupa password. Simpan di tempat aman!
+          </p>
+          
+          <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <input type="text" id="sec-recovery-key" class="form-input" readonly style="font-family: monospace; letter-spacing: 0.06em; font-weight: 700; color: var(--gold-light);" value="Memuat..." />
+            <button class="btn btn-ghost btn-sm" id="btn-copy-rec-key" title="Salin ke Clipboard">📋 Salin</button>
+            <button class="btn btn-ghost btn-sm" id="btn-regen-rec-key" title="Buat Kunci Baru">🔄 Baru</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost btn-sm" data-close="modal-security">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL 4: LUPA PASSWORD (RECOVERY KEY)
+       ============================================================ -->
+  <div class="modal-backdrop" id="modal-forgot-password">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">🔑 Pemulihan Password Pemilik</h3>
+        <button class="modal-close" data-close="modal-forgot-password">&times;</button>
+      </div>
+
+      <form id="form-forgot-password">
+        <div class="modal-body">
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+            Masukkan <strong>Master Recovery Key</strong> Anda untuk mereset password akun <span style="color:var(--gold-light)">jinbase.owner</span>.
+          </p>
+
+          <div class="form-group">
+            <label class="form-label" for="fp-recovery-key">Master Recovery Key *</label>
+            <input type="text" id="fp-recovery-key" class="form-input" placeholder="Contoh: JB-RECOVERY-XXXX" required style="font-family: monospace;" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="fp-new-pwd">Password Baru * (Min 6 Karakter)</label>
+            <input type="password" id="fp-new-pwd" class="form-input" placeholder="Password baru…" required minlength="6" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="fp-confirm-pwd">Konfirmasi Password Baru *</label>
+            <input type="password" id="fp-confirm-pwd" class="form-input" placeholder="Ulangi password baru…" required minlength="6" />
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost btn-sm" data-close="modal-forgot-password">Batal</button>
+          <button type="submit" class="btn btn-gold btn-sm" id="btn-submit-fp">
+            Reset Password Sekarang
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       JAVASCRIPT LOGIC
+       ============================================================ -->
+  <script>
+    (function () {
+      'use strict';
+
+      const API_BASE = '';
+      let authToken = localStorage.getItem('jinbase_admin_token') || '';
+      let currentPage = 1;
+      let currentLimit = 50;
+      let totalPages = 1;
+
+      // DOM Elements
+      const viewLogin = document.getElementById('view-login');
+      const viewDashboard = document.getElementById('view-dashboard');
+      const formLogin = document.getElementById('form-login');
+      const loginPassword = document.getElementById('login-password');
+      const btnTogglePwd = document.getElementById('btn-toggle-pwd');
+      const btnLogout = document.getElementById('btn-logout');
+
+      // Table & stats elements
+      const tbody = document.getElementById('contributors-tbody');
+      const statTotalDonors = document.getElementById('stat-total-donors');
+      const statTotalFunds = document.getElementById('stat-total-funds');
+      const statTotalMoneyCount = document.getElementById('stat-total-money-count');
+      const statTotalMerch = document.getElementById('stat-total-merch');
+      const searchInput = document.getElementById('table-search-input');
+      const filterType = document.getElementById('filter-type');
+      const sortOrder = document.getElementById('sort-order');
+      const paginationInfo = document.getElementById('pagination-info');
+      const paginationCurrentPage = document.getElementById('pagination-current-page');
+      const btnPrevPage = document.getElementById('btn-prev-page');
+      const btnNextPage = document.getElementById('btn-next-page');
+
+      // Modal Elements
+      const modalAdd = document.getElementById('modal-add-contributor');
+      const modalEdit = document.getElementById('modal-edit-contributor');
+      const modalSecurity = document.getElementById('modal-security');
+      const modalForgot = document.getElementById('modal-forgot-password');
+
+      /* ------------------------------------------------------------
+         TOAST NOTIFICATIONS
+      ------------------------------------------------------------ */
+      function showToast(message, type = 'info', duration = 3500) {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        
+        let icon = 'ℹ️';
+        if (type === 'success') icon = '✅';
+        if (type === 'error') icon = '❌';
+
+        toast.innerHTML = `<span style="font-size: 1.1rem;">${icon}</span><span>${message}</span>`;
+        container.appendChild(toast);
+
+        setTimeout(() => {
+          toast.style.opacity = '0';
+          toast.style.transform = 'translateX(40px)';
+          setTimeout(() => toast.remove(), 300);
+        }, duration);
+      }
+
+      /* ------------------------------------------------------------
+         MODAL CONTROLLERS
+      ------------------------------------------------------------ */
+      function openModal(el) {
+        if (el) el.classList.add('active');
+      }
+      function closeModal(el) {
+        if (el) el.classList.remove('active');
+      }
+
+      document.querySelectorAll('[data-close]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const targetId = btn.getAttribute('data-close');
+          const target = document.getElementById(targetId);
+          if (target) closeModal(target);
+        });
+      });
+
+      document.querySelectorAll('.modal-backdrop').forEach(modal => {
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) closeModal(modal);
+        });
+      });
+
+      /* ------------------------------------------------------------
+         FORMATTING HELPERS
+      ------------------------------------------------------------ */
+      function formatRupiah(numStr) {
+        const num = parseInt(numStr || '0', 10);
+        if (isNaN(num)) return 'Rp 0';
+        return 'Rp ' + num.toLocaleString('id-ID');
+      }
+
+      function escapeHtml(str) {
+        return (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      }
+
+      /* ------------------------------------------------------------
+         AUTHENTICATION FLOW
+      ------------------------------------------------------------ */
+      async function checkSession() {
+        if (!authToken) {
+          showLoginView();
+          return;
+        }
+
+        try {
+          const res = await fetch(`${API_BASE}/api/admin/me`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            showDashboardView();
+            loadStats();
+            loadContributors();
+          } else {
+            localStorage.removeItem('jinbase_admin_token');
+            authToken = '';
+            showLoginView();
+          }
+        } catch (err) {
+          showToast('Koneksi ke server bermasalah.', 'error');
+          showLoginView();
+        }
+      }
+
+      function showLoginView() {
+        viewLogin.style.display = 'flex';
+        viewDashboard.style.display = 'none';
+      }
+
+      function showDashboardView() {
+        viewLogin.style.display = 'none';
+        viewDashboard.style.display = 'block';
+      }
+
+      // Password Toggle
+      btnTogglePwd.addEventListener('click', () => {
+        const type = loginPassword.type === 'password' ? 'text' : 'password';
+        loginPassword.type = type;
+        btnTogglePwd.textContent = type === 'password' ? '👁️' : '🙈';
+      });
+
+      // Handle Login Submit
+      formLogin.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const username = document.getElementById('login-username').value;
+        const password = loginPassword.value;
+        const submitBtn = document.getElementById('btn-submit-login');
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span>Memverifikasi…</span>';
+
+        try {
+          const res = await fetch(`${API_BASE}/api/admin/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+          });
+
+          const data = await res.json();
+          if (res.ok && data.token) {
+            authToken = data.token;
+            localStorage.setItem('jinbase_admin_token', authToken);
+            showToast('Selamat datang, Pemilik JINBASE!', 'success');
+            loginPassword.value = '';
+            showDashboardView();
+            loadStats();
+            loadContributors();
+          } else {
+            showToast(data.error || 'Password tidak valid.', 'error');
+          }
+        } catch (err) {
+          showToast('Gagal terhubung ke server.', 'error');
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<span>Masuk ke Dashboard</span>';
+        }
+      });
+
+      // Handle Logout
+      btnLogout.addEventListener('click', async () => {
+        try {
+          await fetch(`${API_BASE}/api/admin/logout`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${authToken}` }
+          });
+        } catch (_) {}
+        localStorage.removeItem('jinbase_admin_token');
+        authToken = '';
+        showToast('Anda telah keluar.', 'info');
+        showLoginView();
+      });
+
+      /* ------------------------------------------------------------
+         LOAD STATS & CONTRIBUTORS
+      ------------------------------------------------------------ */
+      async function loadStats() {
+        try {
+          const res = await fetch(`${API_BASE}/api/stats`);
+          if (res.ok) {
+            const stats = await res.json();
+            statTotalDonors.textContent = (stats.totalContributors || 0).toLocaleString('id-ID');
+            statTotalFunds.textContent = formatRupiah(stats.totalFunds);
+            statTotalMoneyCount.textContent = `${(stats.totalMoney || 0).toLocaleString('id-ID')} donatur via dana`;
+            statTotalMerch.textContent = (stats.totalMerchandise || 0).toLocaleString('id-ID');
+          }
+        } catch (err) {
+          console.error('Failed to load stats:', err);
+        }
+      }
+
+      let debounceTimer = null;
+      searchInput.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          currentPage = 1;
+          loadContributors();
+        }, 300);
+      });
+
+      filterType.addEventListener('change', () => {
+        currentPage = 1;
+        loadContributors();
+      });
+
+      sortOrder.addEventListener('change', () => {
+        currentPage = 1;
+        loadContributors();
+      });
+
+      document.getElementById('btn-refresh-table').addEventListener('click', () => {
+        loadStats();
+        loadContributors();
+        showToast('Data berhasil disegarkan.', 'info');
+      });
+
+      async function loadContributors() {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">Memuat daftar donatur…</td></tr>`;
+
+        const q = encodeURIComponent(searchInput.value.trim());
+        const type = filterType.value;
+        const sortVal = sortOrder.value;
+        let [sort, order] = sortVal.split('_');
+
+        const url = `${API_BASE}/api/admin/contributors?q=${q}&type=${type}&sort=${sort}&order=${order}&page=${currentPage}&limit=${currentLimit}`;
+
+        try {
+          const res = await fetch(url, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+          });
+
+          if (res.status === 401) {
+            showToast('Sesi berakhir. Silakan login kembali.', 'error');
+            showLoginView();
+            return;
+          }
+
+          const data = await res.json();
+          renderContributorsTable(data.contributors || []);
+          renderPagination(data.pagination);
+        } catch (err) {
+          tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 2.5rem; color: var(--danger);">Gagal memuat data donatur.</td></tr>`;
+        }
+      }
+
+      function renderContributorsTable(list) {
+        if (list.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-dim);">Tidak ada donatur yang sesuai dengan pencarian.</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = list.map(c => {
+          const isMerch = c.contribution_type === 'merchandise';
+          const typeBadge = isMerch
+            ? `<span class="badge badge-merch">🎁 Merchandise</span>`
+            : `<span class="badge badge-money">💰 Uang</span>`;
+
+          const amountFormatted = isMerch ? '-' : formatRupiah(c.amount);
+
+          return `
+            <tr data-id="${escapeHtml(c.id)}">
+              <td><strong style="color: var(--gold-light); font-family: monospace;">#${escapeHtml(c.id)}</strong></td>
+              <td>
+                <div style="font-weight: 600; color: #fff;">${escapeHtml(c.name)}</div>
+                <div style="font-size: 0.78rem; color: var(--text-dim);">${escapeHtml(c.email)}</div>
+              </td>
+              <td>${typeBadge}</td>
+              <td style="font-weight: 600; color: ${isMerch ? 'var(--text-dim)' : '#34D399'};">${amountFormatted}</td>
+              <td>
+                <span class="code-pill">${escapeHtml(c.verifyCode || '-')}</span>
+              </td>
+              <td style="text-align: right;">
+                <div class="table-actions" style="justify-content: flex-end;">
+                  <a href="/v/${encodeURIComponent(c.verifyCode)}" target="_blank" class="btn-icon" title="Lihat Halaman Verifikasi Publik">
+                    🔗
+                  </a>
+                  <button class="btn-icon btn-edit-donor" data-donor='${JSON.stringify(c).replace(/'/g, "&apos;")}' title="Edit Donatur">
+                    ✏️
+                  </button>
+                  <button class="btn-icon delete btn-delete-donor" data-id="${escapeHtml(c.id)}" data-name="${escapeHtml(c.name)}" title="Hapus Donatur">
+                    🗑️
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+
+        // Attach action handlers
+        document.querySelectorAll('.btn-edit-donor').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const donor = JSON.parse(btn.getAttribute('data-donor'));
+            openEditModal(donor);
+          });
+        });
+
+        document.querySelectorAll('.btn-delete-donor').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const id = btn.getAttribute('data-id');
+            const name = btn.getAttribute('data-name');
+            deleteDonor(id, name);
+          });
+        });
+      }
+
+      function renderPagination(pagination) {
+        if (!pagination) return;
+        totalPages = pagination.totalPages || 1;
+        currentPage = pagination.page || 1;
+
+        paginationInfo.textContent = `Menampilkan ${pagination.total ? ((currentPage - 1) * currentLimit + 1) : 0} - ${Math.min(currentPage * currentLimit, pagination.total)} dari ${pagination.total} donatur`;
+        paginationCurrentPage.textContent = `${currentPage} / ${totalPages}`;
+
+        btnPrevPage.disabled = !pagination.hasPrev;
+        btnNextPage.disabled = !pagination.hasNext;
+      }
+
+      btnPrevPage.addEventListener('click', () => {
+        if (currentPage > 1) {
+          currentPage--;
+          loadContributors();
+        }
+      });
+
+      btnNextPage.addEventListener('click', () => {
+        if (currentPage < totalPages) {
+          currentPage++;
+          loadContributors();
+        }
+      });
+
+      /* ------------------------------------------------------------
+         ADD CONTRIBUTOR LOGIC
+      ------------------------------------------------------------ */
+      const btnOpenAddModal = document.getElementById('btn-open-add-modal');
+      const formAdd = document.getElementById('form-add-contributor');
+      const addName = document.getElementById('add-name');
+      const addEmail = document.getElementById('add-email');
+      const addType = document.getElementById('add-type');
+      const addAmount = document.getElementById('add-amount');
+      const addAmountPreview = document.getElementById('add-amount-preview');
+      const addCustomId = document.getElementById('add-custom-id');
+      const addCodePreview = document.getElementById('add-code-preview');
+      const groupAddAmount = document.getElementById('group-add-amount');
+      const segAddMoney = document.getElementById('seg-add-money');
+      const segAddMerch = document.getElementById('seg-add-merch');
+
+      btnOpenAddModal.addEventListener('click', () => {
+        formAdd.reset();
+        addType.value = 'money';
+        segAddMoney.classList.add('active');
+        segAddMerch.classList.remove('active');
+        groupAddAmount.style.display = 'block';
+        addAmountPreview.textContent = 'Format: Rp 0';
+        addCodePreview.textContent = 'JB-XXXX-XXXX';
+        openModal(modalAdd);
+      });
+
+      segAddMoney.addEventListener('click', () => {
+        segAddMoney.classList.add('active');
+        segAddMerch.classList.remove('active');
+        addType.value = 'money';
+        groupAddAmount.style.display = 'block';
+      });
+
+      segAddMerch.addEventListener('click', () => {
+        segAddMerch.classList.add('active');
+        segAddMoney.classList.remove('active');
+        addType.value = 'merchandise';
+        groupAddAmount.style.display = 'none';
+      });
+
+      addAmount.addEventListener('input', () => {
+        const clean = addAmount.value.replace(/[^0-9]/g, '');
+        addAmountPreview.textContent = 'Format: ' + formatRupiah(clean);
+      });
+
+      function updateAddCodePreview() {
+        const email = (addEmail.value || '').trim().toLowerCase();
+        const id = (addCustomId.value || '').trim() || 'NEW';
+        if (!email) {
+          addCodePreview.textContent = 'JB-XXXX-XXXX';
+          return;
+        }
+        // Simple hash preview
+        const raw = `${id}:${email}`;
+        let hash = 0;
+        for (let i = 0; i < raw.length; i++) {
+          hash = ((hash << 5) - hash) + raw.charCodeAt(i);
+          hash |= 0;
+        }
+        const hex = Math.abs(hash).toString(16).toUpperCase().padStart(8, '0');
+        addCodePreview.textContent = `JB-${hex.slice(0, 4)}-${hex.slice(4, 8)}`;
+      }
+
+      addEmail.addEventListener('input', updateAddCodePreview);
+      addCustomId.addEventListener('input', updateAddCodePreview);
+
+      formAdd.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btnSave = document.getElementById('btn-save-add');
+        btnSave.disabled = true;
+        btnSave.textContent = 'Menyimpan…';
+
+        const payload = {
+          name: addName.value.trim(),
+          email: addEmail.value.trim().toLowerCase(),
+          contribution_type: addType.value,
+          amount: addAmount.value.replace(/[^0-9]/g, '') || '0',
+          id: addCustomId.value.trim() || undefined
+        };
+
+        try {
+          const res = await fetch(`${API_BASE}/api/admin/contributors`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify(payload)
+          });
+
+          const data = await res.json();
+          if (res.ok) {
+            showToast(data.message || 'Donatur berhasil ditambahkan.', 'success');
+            closeModal(modalAdd);
+            loadStats();
+            loadContributors();
+          } else {
+            showToast(data.error || 'Gagal menambahkan donatur.', 'error');
+          }
+        } catch (err) {
+          showToast('Koneksi server gagal.', 'error');
+        } finally {
+          btnSave.disabled = false;
+          btnSave.textContent = 'Simpan ke Database';
+        }
+      });
+
+      /* ------------------------------------------------------------
+         EDIT CONTRIBUTOR LOGIC
+      ------------------------------------------------------------ */
+      const formEdit = document.getElementById('form-edit-contributor');
+      const editId = document.getElementById('edit-id');
+      const editName = document.getElementById('edit-name');
+      const editEmail = document.getElementById('edit-email');
+      const editType = document.getElementById('edit-type');
+      const editAmount = document.getElementById('edit-amount');
+      const groupEditAmount = document.getElementById('group-edit-amount');
+      const segEditMoney = document.getElementById('seg-edit-money');
+      const segEditMerch = document.getElementById('seg-edit-merch');
+
+      function openEditModal(donor) {
+        editId.value = donor.id;
+        editName.value = donor.name;
+        editEmail.value = donor.email;
+        editType.value = donor.contribution_type || 'money';
+        editAmount.value = donor.amount || '0';
+
+        if (donor.contribution_type === 'merchandise') {
+          segEditMerch.classList.add('active');
+          segEditMoney.classList.remove('active');
+          groupEditAmount.style.display = 'none';
+        } else {
+          segEditMoney.classList.add('active');
+          segEditMerch.classList.remove('active');
+          groupEditAmount.style.display = 'block';
+        }
+
+        openModal(modalEdit);
+      }
+
+      segEditMoney.addEventListener('click', () => {
+        segEditMoney.classList.add('active');
+        segEditMerch.classList.remove('active');
+        editType.value = 'money';
+        groupEditAmount.style.display = 'block';
+      });
+
+      segEditMerch.addEventListener('click', () => {
+        segEditMerch.classList.add('active');
+        segEditMoney.classList.remove('active');
+        editType.value = 'merchandise';
+        groupEditAmount.style.display = 'none';
+      });
+
+      formEdit.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btnSave = document.getElementById('btn-save-edit');
+        btnSave.disabled = true;
+        btnSave.textContent = 'Memperbarui…';
+
+        const id = editId.value;
+        const payload = {
+          name: editName.value.trim(),
+          email: editEmail.value.trim().toLowerCase(),
+          contribution_type: editType.value,
+          amount: editAmount.value.replace(/[^0-9]/g, '') || '0'
+        };
+
+        try {
+          const res = await fetch(`${API_BASE}/api/admin/contributors/${encodeURIComponent(id)}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify(payload)
+          });
+
+          const data = await res.json();
+          if (res.ok) {
+            showToast(data.message || 'Data donatur diperbarui.', 'success');
+            closeModal(modalEdit);
+            loadStats();
+            loadContributors();
+          } else {
+            showToast(data.error || 'Gagal memperbarui data.', 'error');
+          }
+        } catch (err) {
+          showToast('Koneksi server gagal.', 'error');
+        } finally {
+          btnSave.disabled = false;
+          btnSave.textContent = 'Simpan Perubahan';
+        }
+      });
+
+      /* ------------------------------------------------------------
+         DELETE CONTRIBUTOR
+      ------------------------------------------------------------ */
+      async function deleteDonor(id, name) {
+        const confirmed = window.confirm(`Apakah Anda yakin ingin menghapus data donatur "${name}" (ID: ${id}) dari database?`);
+        if (!confirmed) return;
+
+        try {
+          const res = await fetch(`${API_BASE}/api/admin/contributors/${encodeURIComponent(id)}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${authToken}` }
+          });
+
+          const data = await res.json();
+          if (res.ok) {
+            showToast(data.message || 'Donatur berhasil dihapus.', 'success');
+            loadStats();
+            loadContributors();
+          } else {
+            showToast(data.error || 'Gagal menghapus donatur.', 'error');
+          }
+        } catch (err) {
+          showToast('Koneksi server gagal.', 'error');
+        }
+      }
+
+      /* ------------------------------------------------------------
+         SECURITY & PASSWORD MODAL
+      ------------------------------------------------------------ */
+      const btnOpenSecurity = document.getElementById('btn-open-security-modal');
+      const formChangePwd = document.getElementById('form-change-password');
+      const secRecoveryKey = document.getElementById('sec-recovery-key');
+      const btnCopyRecKey = document.getElementById('btn-copy-rec-key');
+      const btnRegenRecKey = document.getElementById('btn-regen-rec-key');
+
+      btnOpenSecurity.addEventListener('click', async () => {
+        formChangePwd.reset();
+        openModal(modalSecurity);
+        loadRecoveryKey();
+      });
+
+      async function loadRecoveryKey() {
+        secRecoveryKey.value = 'Memuat…';
+        try {
+          const res = await fetch(`${API_BASE}/api/admin/recovery-key`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+          });
+          const data = await res.json();
+          if (res.ok) {
+            secRecoveryKey.value = data.recoveryKey;
+          }
+        } catch (_) {
+          secRecoveryKey.value = 'Gagal memuat';
+        }
+      }
+
+      btnCopyRecKey.addEventListener('click', () => {
+        if (secRecoveryKey.value && secRecoveryKey.value !== 'Memuat…') {
+          navigator.clipboard.writeText(secRecoveryKey.value);
+          showToast('Recovery key disalin ke clipboard!', 'success');
+        }
+      });
+
+      btnRegenRecKey.addEventListener('click', async () => {
+        const confirmRegen = window.confirm('Buat Recovery Key baru? Kunci lama tidak akan berlaku lagi.');
+        if (!confirmRegen) return;
+
+        try {
+          const res = await fetch(`${API_BASE}/api/admin/regenerate-recovery-key`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${authToken}` }
+          });
+          const data = await res.json();
+          if (res.ok) {
+            secRecoveryKey.value = data.recoveryKey;
+            showToast('Recovery key baru berhasil dibuat!', 'success');
+          }
+        } catch (err) {
+          showToast('Gagal memperbarui recovery key.', 'error');
+        }
+      });
+
+      formChangePwd.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const currentPassword = document.getElementById('pwd-current').value;
+        const newPassword = document.getElementById('pwd-new').value;
+        const confirmPassword = document.getElementById('pwd-confirm').value;
+
+        if (newPassword !== confirmPassword) {
+          showToast('Konfirmasi password baru tidak cocok!', 'error');
+          return;
+        }
+
+        try {
+          const res = await fetch(`${API_BASE}/api/admin/change-password`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({ currentPassword, newPassword })
+          });
+
+          const data = await res.json();
+          if (res.ok) {
+            showToast('Password Anda berhasil diperbarui!', 'success');
+            formChangePwd.reset();
+            closeModal(modalSecurity);
+          } else {
+            showToast(data.error || 'Gagal mengubah password.', 'error');
+          }
+        } catch (err) {
+          showToast('Koneksi server gagal.', 'error');
+        }
+      });
+
+      /* ------------------------------------------------------------
+         FORGOT PASSWORD / RECOVERY MODAL
+      ------------------------------------------------------------ */
+      const linkForgotPwd = document.getElementById('link-forgot-pwd');
+      const formForgotPwd = document.getElementById('form-forgot-password');
+
+      linkForgotPwd.addEventListener('click', (e) => {
+        e.preventDefault();
+        formForgotPwd.reset();
+        openModal(modalForgot);
+      });
+
+      formForgotPwd.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const recoveryKey = document.getElementById('fp-recovery-key').value.trim();
+        const newPassword = document.getElementById('fp-new-pwd').value;
+        const confirmPassword = document.getElementById('fp-confirm-pwd').value;
+
+        if (newPassword !== confirmPassword) {
+          showToast('Konfirmasi password tidak cocok!', 'error');
+          return;
+        }
+
+        const btnSubmit = document.getElementById('btn-submit-fp');
+        btnSubmit.disabled = true;
+        btnSubmit.textContent = 'Mereset…';
+
+        try {
+          const res = await fetch(`${API_BASE}/api/admin/forgot-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ recoveryKey, newPassword })
+          });
+
+          const data = await res.json();
+          if (res.ok) {
+            showToast('Password berhasil direset! Silakan login dengan password baru Anda.', 'success', 5000);
+            closeModal(modalForgot);
+          } else {
+            showToast(data.error || 'Gagal mereset password.', 'error');
+          }
+        } catch (err) {
+          showToast('Koneksi server gagal.', 'error');
+        } finally {
+          btnSubmit.disabled = false;
+          btnSubmit.textContent = 'Reset Password Sekarang';
+        }
+      });
+
+      /* ------------------------------------------------------------
+         EXPORT DATABASE (JSON)
+      ------------------------------------------------------------ */
+      document.getElementById('btn-export-json').addEventListener('click', async () => {
+        try {
+          const res = await fetch(`${API_BASE}/api/admin/contributors?limit=2000`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+          });
+          const data = await res.json();
+          if (res.ok && data.contributors) {
+            const blob = new Blob([JSON.stringify(data.contributors, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `jinbase-donors-backup-${new Date().toISOString().slice(0, 10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Database berhasil diexport.', 'success');
+          }
+        } catch (err) {
+          showToast('Gagal mengekspor data.', 'error');
+        }
+      });
+
+      // Initial check
+      checkSession();
+
+    })();
+  </script>
+</body>
+</html>
