@@ -12,21 +12,30 @@ const IS_NETLIFY =
   process.env.NETLIFY === 'true' ||
   !!process.env.NETLIFY_SITE_ID ||
   !!process.env.SITE_ID;
+
 const STORE_NAME = 'jinbase-data';
+
 const blobKeys = {
   contributors: 'contributors.json',
   adminConfig: 'admin-config.json',
 };
 
+const { getStore } = require('@netlify/blobs');
+
 let blobStorePromise = null;
 
 async function getBlobStore() {
   if (!IS_NETLIFY) return null;
+
   if (!blobStorePromise) {
-    blobStorePromise = import('@netlify/blobs').then(({ getStore }) =>
-      getStore({ name: STORE_NAME, consistency: 'strong' })
+    blobStorePromise = Promise.resolve(
+      getStore({
+        name: STORE_NAME,
+        consistency: 'strong',
+      })
     );
   }
+
   return blobStorePromise;
 }
 
