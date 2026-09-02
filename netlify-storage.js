@@ -1,12 +1,12 @@
 /**
  * JINBASE persistent storage adapter.
  *
- * Production (Netlify Functions): Netlify Blobs, site-wide + strongly consistent.
+ * Production (Netlify Functions): Netlify Blobs.
  * Local npm start: JSON files under data/ for offline development.
  */
+
 const fs = require('fs/promises');
 const fsSync = require('fs');
-const path = require('path');
 
 const IS_NETLIFY =
   process.env.NETLIFY === 'true' ||
@@ -31,8 +31,6 @@ async function getBlobStore() {
     blobStorePromise = Promise.resolve(
       getStore({
         name: STORE_NAME,
-        siteID: process.env.NETLIFY_SITE_ID || process.env.SITE_ID,
-        token: process.env.NETLIFY_AUTH_TOKEN,
       })
     );
   }
@@ -43,19 +41,26 @@ async function getBlobStore() {
 async function readJson(key, fallbackPath) {
   const store = await getBlobStore();
 
-
   if (store) {
     const data = await store.get(blobKeys[key] || key, {
       type: 'json',
     });
 
-    if (data !== null) return data;
+    if (data !== null) {
+      return data;
+    }
 
-    // First production deployment: migrate the repository seed file into Blobs.
+    // First production deployment:
+    // migrate the repository seed file into Netlify Blobs.
     const raw = await fs.readFile(fallbackPath, 'utf8');
     const parsed = JSON.parse(raw);
+
     await store.setJSON(blobKeys[key] || key, parsed);
-    console.log(`☁️ [Netlify Blobs] Initialized ${key} from repository seed.`);
+
+    console.log(
+      `☁️ [Netlify Blobs] Initialized ${key} from repository seed.`
+    );
+
     return parsed;
   }
 
@@ -71,11 +76,20 @@ async function writeJson(key, value, fallbackPath) {
     return;
   }
 
-  await fs.writeFile(fallbackPath, JSON.stringify(value, null, 4), 'utf8');
+  await fs.writeFile(
+    fallbackPath,
+    JSON.stringify(value, null, 4),
+    'utf8'
+  );
 }
 
 function seedExists(filePath) {
   return fsSync.existsSync(filePath);
 }
 
-module.exports = { IS_NETLIFY, readJson, writeJson, seedExists };
+module.exports = {
+  IS_NETLIFY,
+  readJson,
+  writeJson,
+  seedExists,
+};
