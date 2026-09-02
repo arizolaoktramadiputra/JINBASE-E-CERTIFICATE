@@ -8,7 +8,10 @@ const fs = require('fs/promises');
 const fsSync = require('fs');
 const path = require('path');
 
-const IS_NETLIFY = process.env.NETLIFY === 'true' || !!process.env.NETLIFY_SITE_ID;
+const IS_NETLIFY =
+  process.env.NETLIFY === 'true' ||
+  !!process.env.NETLIFY_SITE_ID ||
+  !!process.env.SITE_ID;
 const STORE_NAME = 'jinbase-data';
 const blobKeys = {
   contributors: 'contributors.json',

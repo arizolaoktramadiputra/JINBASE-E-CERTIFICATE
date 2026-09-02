@@ -21,6 +21,10 @@ const { readJson, writeJson, IS_NETLIFY } = require('./netlify-storage');
 // Server last updated: 2026-09-01 (reloaded with 501 contributors)
 const app = express();
 const PORT = process.env.PORT || 3000;
+// Netlify Functions berjalan di belakang proxy.
+// Diperlukan agar express-rate-limit dapat membaca request.ip
+// dari X-Forwarded-For dengan benar.
+app.set('trust proxy', 1);
 
 /* ------------------------------------------------------------
    LOAD DATA (sekali saat startup, hanya ada di memori server)
@@ -122,7 +126,7 @@ async function saveContributors() {
   rebuildCodeMap();
 }
 
-ensureContributorsLoaded().catch(() => {});
+ensureContributorsLoaded().catch(() => { });
 
 /* ------------------------------------------------------------
    ADMIN AUTHENTICATION & CONFIGURATION (SINGLE OWNER ACCOUNT)
@@ -188,7 +192,7 @@ async function saveAdminConfig() {
   await writeJson('adminConfig', adminConfig, ADMIN_CONFIG_PATH);
 }
 
-ensureAdminConfigLoaded().catch(() => {});
+ensureAdminConfigLoaded().catch(() => { });
 
 function base64UrlEncode(value) {
   return Buffer.from(value).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
@@ -1066,10 +1070,10 @@ app.get('/api/admin/contributors', requireAdminAuth, (req, res) => {
       const code = generateVerifyCode(c).toLowerCase();
 
       return name.includes(query) ||
-             email.includes(query) ||
-             id.includes(query) ||
-             code.includes(query) ||
-             (qKey && (stripKey(name).includes(qKey) || stripKey(email).includes(qKey)));
+        email.includes(query) ||
+        id.includes(query) ||
+        code.includes(query) ||
+        (qKey && (stripKey(name).includes(qKey) || stripKey(email).includes(qKey)));
     });
   }
 
