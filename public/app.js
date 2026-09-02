@@ -524,20 +524,19 @@ function escapeHtml(str) {
 }
 
 /* ============================================================
-   DOWNLOAD (PDF via jsPDF + html2canvas)
+   DOWNLOAD (High-Definition Direct Canvas 2D -> PDF via jsPDF)
+   No DOM cloning / html2canvas dependency for 100% reliable
+   rendering on iOS Safari, Chrome iOS, Android, and Desktop.
    ============================================================ */
 
 async function downloadCertificate() {
   if (!currentContributor) return;
 
   const btn = document.getElementById('btn-download');
-  const certEl = document.getElementById('certificate');
-
-  if (!certEl) return;
+  const originalHTML = btn ? btn.innerHTML : '';
 
   if (btn) {
     btn.classList.add('loading');
-    const originalHTML = btn.innerHTML;
     btn.innerHTML = `
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" style="animation: spin 1s linear infinite;">
         <circle cx="12" cy="12" r="10" stroke-opacity="0.25"/>
@@ -545,149 +544,164 @@ async function downloadCertificate() {
       </svg>
       Generating PDF...
     `;
+  }
 
-    let cloneContainer = null;
+  try {
+    // ── Dimensi TEPAT proporsional A4 Landscape ──────────────────
+    // A4 = 297mm × 210mm, rasio = 297/210 = 1.41428...
+    // 297 × 6 = 1782, 210 × 6 = 1260 → kelipatan tepat mm, zero rounding
+    const A4_W_MM = 297;
+    const A4_H_MM = 210;
+    const RENDER_SCALE = 6;  // px per mm
+    const targetWidth = A4_W_MM * RENDER_SCALE;  // 1782 px
+    const targetHeight = A4_H_MM * RENDER_SCALE;  // 1260 px
+
+    // Pastikan font sudah selesai termuat di browser
+    if (document.fonts && document.fonts.ready) {
+      await document.fonts.ready;
+    }
+    try {
+      if (document.fonts && document.fonts.load) {
+        await Promise.all([
+          document.fonts.load('120px "Great Vibes"'),
+          document.fonts.load('600 16px "Inter"')
+        ]);
+      }
+    } catch (fontErr) {
+      console.warn('Font preload warning:', fontErr);
+    }
+
+    // ── 1. Muat background template SVG secara presisi ────────────
+    let bgImg = null;
+    let blobUrl = null;
 
     try {
-      // ── Dimensi TEPAT proporsional A4 Landscape ──────────────────
-      // A4 = 297mm × 210mm, rasio = 297/210 = 1.41428...
-      // 297 × 6 = 1782, 210 × 6 = 1260 → kelipatan tepat mm, zero rounding
-      const A4_W_MM = 297;
-      const A4_H_MM = 210;
-      const RENDER_SCALE = 6;  // px per mm
-      const targetWidth = A4_W_MM * RENDER_SCALE;  // 1782 px
-      const targetHeight = A4_H_MM * RENDER_SCALE;  // 1260 px
+      const svgRes = await fetch('assets-photos/certificate-design.svg');
+      if (!svgRes.ok) throw new Error(`HTTP ${svgRes.status}`);
+      let svgText = await svgRes.text();
 
-      // ── Kontainer offscreen dengan dimensi tepat A4 ───────────────
-      cloneContainer = document.createElement('div');
-      cloneContainer.style.cssText = [
-        'position:fixed',
-        'left:-999999px',
-        'top:0',
-        `width:${targetWidth}px`,
-        `height:${targetHeight}px`,
-        'overflow:hidden',
-        'margin:0',
-        'padding:0',
-        'border:0',
-        'border-radius:0',
-        'background:#ffffff',
-        'z-index:-9999',
-      ].join(';');
+      // Sesuaikan atribut dimensi SVG ke targetWidth & targetHeight agar di-rasterkan secara tajam & penuh
+      svgText = svgText
+        .replace(/width="[^"]*"/, `width="${targetWidth}"`)
+        .replace(/height="[^"]*"/, `height="${targetHeight}"`)
+        .replace(/preserveAspectRatio="[^"]*"/, 'preserveAspectRatio="none"');
 
-      // ── Clone sertifikat — reset semua efek visual ─────────────────
-      const clonedCert = certEl.cloneNode(true);
-      clonedCert.style.cssText = [
-        'width:100%',
-        'height:100%',
-        'position:relative',
-        'margin:0',
-        'padding:0',
-        'border:0',
-        'border-radius:0',
-        'transform:none',
-        '-webkit-transform:none',
-        'box-shadow:none',
-        'background:#ffffff',
-      ].join(';');
+      const svgBlob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
+      blobUrl = URL.createObjectURL(svgBlob);
 
-      // Gambar background sertifikat mengisi penuh tanpa celah subpixel
-      const clonedImg = clonedCert.querySelector('.cert-bg-img');
-      if (clonedImg) {
-        clonedImg.style.cssText = [
-          'display:block',
-          'width:100%',
-          'height:100%',
-          'object-fit:fill',
-          'margin:0',
-          'padding:0',
-          'border:0',
-        ].join(';');
+      bgImg = new Image();
+      bgImg.crossOrigin = 'anonymous';
+      await new Promise((resolve, reject) => {
+        bgImg.onload = () => resolve();
+        bgImg.onerror = (e) => reject(new Error('Gagal memuat template SVG via Blob'));
+        bgImg.src = blobUrl;
+      });
+    } catch (fetchErr) {
+      console.warn('Direct SVG fetch fallback to image element:', fetchErr);
+      // Fallback jika fetch blob terhambat
+      const domImg = document.querySelector('.cert-bg-img');
+      if (domImg && domImg.complete && domImg.naturalWidth > 0) {
+        bgImg = domImg;
+      } else {
+        bgImg = new Image();
+        bgImg.crossOrigin = 'anonymous';
+        await new Promise((resolve, reject) => {
+          bgImg.onload = () => resolve();
+          bgImg.onerror = () => reject(new Error('Gagal memuat gambar sertifikat'));
+          bgImg.src = 'assets-photos/certificate-design.svg';
+        });
       }
+    }
 
-      // Skala font proporsional terhadap targetWidth baru (referensi: 1677px → 115px)
+    // ── 2. Render ke 2D Canvas dengan dimensi tepat ───────────────
+    const canvas = document.createElement('canvas');
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+    const ctx = canvas.getContext('2d', { alpha: false });
+
+    // Background putih solid
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, targetWidth, targetHeight);
+
+    // Gambar background SVG template
+    ctx.drawImage(bgImg, 0, 0, targetWidth, targetHeight);
+
+    if (blobUrl) {
+      URL.revokeObjectURL(blobUrl);
+    }
+
+    // ── 3. Render Nama Kontributor (Cursive Red Font) ─────────────
+    const name = (currentContributor.name || '').trim();
+    if (name) {
       const BASE_WIDTH = 1677;
-      const clonedName = clonedCert.querySelector('.cert-recipient-name');
-      if (clonedName) {
-        clonedName.style.fontSize = `${Math.round(115 * targetWidth / BASE_WIDTH)}px`;
+      let fontSize = Math.round(115 * targetWidth / BASE_WIDTH); // ~122px
+      const maxWidth = targetWidth * 0.84; // Batas lebar agar tidak melebihi bingkai
+
+      ctx.fillStyle = '#8B0000';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = `${fontSize}px "Great Vibes", "Dancing Script", "Playfair Display", Georgia, cursive`;
+
+      // Auto scale font size jika nama kontributor sangat panjang
+      while (ctx.measureText(name).width > maxWidth && fontSize > 36) {
+        fontSize -= 3;
+        ctx.font = `${fontSize}px "Great Vibes", "Dancing Script", "Playfair Display", Georgia, cursive`;
       }
-      const clonedVerify = clonedCert.querySelector('.cert-verify-overlay');
-      if (clonedVerify) {
-        clonedVerify.style.fontSize = `${Math.round(14 * targetWidth / BASE_WIDTH)}px`;
-      }
 
-      cloneContainer.appendChild(clonedCert);
-      document.body.appendChild(cloneContainer);
+      // Posisi vertikal nama: top 23% + height 22%/2 = 34.0%
+      const nameX = targetWidth / 2;
+      const nameY = targetHeight * 0.340;
 
-      // Tunggu font dan layout benar-benar selesai
-      if (document.fonts && document.fonts.ready) {
-        await document.fonts.ready;
-      }
-      // Dua frame agar layout settle sempurna
-      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+      ctx.fillText(name, nameX, nameY);
+    }
 
-      // ── Render canvas persis targetWidth × targetHeight ───────────
-      const canvas = await html2canvas(clonedCert, {
-        scale: 1,
-        useCORS: true,
-        allowTaint: false,
-        backgroundColor: '#ffffff',
-        logging: false,
-        width: targetWidth,
-        height: targetHeight,
-        windowWidth: targetWidth,
-        windowHeight: targetHeight,
-        x: 0,
-        y: 0,
-        scrollX: 0,
-        scrollY: 0,
-        imageTimeout: 15000,
-      });
+    // ── 4. Render Kode Verifikasi di pojok kanan bawah ────────────
+    const verifyCode = currentContributor.verifyCode || '';
+    if (verifyCode) {
+      const verifyFontSize = Math.max(12, Math.round(13.5 * targetWidth / 1677));
+      ctx.font = `600 ${verifyFontSize}px "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
 
-      // ── Re-draw ke canvas baru dengan dimensi PERSIS untuk elim subpixel ──
-      const finalCanvas = document.createElement('canvas');
-      finalCanvas.width = targetWidth;
-      finalCanvas.height = targetHeight;
-      const ctx = finalCanvas.getContext('2d');
-      ctx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, targetWidth, targetHeight);
+      const verifyX = targetWidth - (targetWidth * 0.035);
+      const verifyY = targetHeight - (targetHeight * 0.016);
+      ctx.fillText(`Kode: ${verifyCode}`, verifyX, verifyY);
+    }
 
-      // ── PDF A4 Landscape — gambar isi PENUH, NO white border ──────
-      const { jsPDF } = window.jspdf || {};
-      if (!jsPDF) throw new Error('jsPDF library is not loaded');
+    // ── 5. Generate PDF A4 Landscape via jsPDF ────────────────────
+    const { jsPDF } = window.jspdf || {};
+    if (!jsPDF) throw new Error('jsPDF library is not loaded');
 
-      const pdf = new jsPDF({
-        orientation: 'landscape',
-        unit: 'mm',
-        format: 'a4',
-        compress: true,
-      });
+    const pdf = new jsPDF({
+      orientation: 'landscape',
+      unit: 'mm',
+      format: 'a4',
+      compress: true,
+    });
 
-      const pdfW = pdf.internal.pageSize.getWidth();   // 297 mm persis
-      const pdfH = pdf.internal.pageSize.getHeight();  // 210 mm persis
+    const pdfW = pdf.internal.pageSize.getWidth();   // 297 mm
+    const pdfH = pdf.internal.pageSize.getHeight();  // 210 mm
 
-      const imgData = finalCanvas.toDataURL('image/jpeg', 0.95);
+    const imgData = canvas.toDataURL('image/jpeg', 0.96);
 
-      // x=0, y=0, w=pdfW, h=pdfH → tepat A4, NO white border
-      pdf.addImage(imgData, 'JPEG', 0, 0, pdfW, pdfH, '', 'FAST');
+    // x=0, y=0, w=pdfW, h=pdfH → tepat A4, NO white border
+    pdf.addImage(imgData, 'JPEG', 0, 0, pdfW, pdfH, '', 'FAST');
 
-      const safeName = (currentContributor.name || 'contributor')
-        .replace(/[^a-zA-Z0-9_\- ]/g, '')
-        .trim()
-        .replace(/\s+/g, '_');
+    const safeName = (currentContributor.name || 'contributor')
+      .replace(/[^a-zA-Z0-9_\- ]/g, '')
+      .trim()
+      .replace(/\s+/g, '_');
 
-      pdf.save(`Appreciation_Card_${safeName}.pdf`);
+    pdf.save(`Appreciation_Card_${safeName}.pdf`);
 
-    } catch (err) {
-      console.error('Download PDF failed:', err);
-      alert('Download PDF gagal. Silakan coba lagi sebentar lagi.');
-    } finally {
-      if (cloneContainer && cloneContainer.parentNode) {
-        cloneContainer.parentNode.removeChild(cloneContainer);
-      }
-      if (btn) {
-        btn.classList.remove('loading');
-        btn.innerHTML = originalHTML;
-      }
+  } catch (err) {
+    console.error('Download PDF failed:', err);
+    alert('Download PDF gagal. Silakan coba lagi sebentar lagi.');
+  } finally {
+    if (btn) {
+      btn.classList.remove('loading');
+      btn.innerHTML = originalHTML;
     }
   }
 }
