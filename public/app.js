@@ -571,47 +571,15 @@ async function downloadCertificate() {
       console.warn('Font preload warning:', fontErr);
     }
 
-    // ── 1. Muat background template SVG secara presisi ────────────
-    let bgImg = null;
-    let blobUrl = null;
+    // ── 1. Muat background template HD PNG secara presisi ──────────
+    const bgImg = new Image();
+    bgImg.crossOrigin = 'anonymous';
 
-    try {
-      const svgRes = await fetch('assets-photos/certificate-design.svg');
-      if (!svgRes.ok) throw new Error(`HTTP ${svgRes.status}`);
-      let svgText = await svgRes.text();
-
-      // Sesuaikan atribut dimensi SVG ke targetWidth & targetHeight agar di-rasterkan secara tajam & penuh
-      svgText = svgText
-        .replace(/width="[^"]*"/, `width="${targetWidth}"`)
-        .replace(/height="[^"]*"/, `height="${targetHeight}"`)
-        .replace(/preserveAspectRatio="[^"]*"/, 'preserveAspectRatio="none"');
-
-      const svgBlob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
-      blobUrl = URL.createObjectURL(svgBlob);
-
-      bgImg = new Image();
-      bgImg.crossOrigin = 'anonymous';
-      await new Promise((resolve, reject) => {
-        bgImg.onload = () => resolve();
-        bgImg.onerror = (e) => reject(new Error('Gagal memuat template SVG via Blob'));
-        bgImg.src = blobUrl;
-      });
-    } catch (fetchErr) {
-      console.warn('Direct SVG fetch fallback to image element:', fetchErr);
-      // Fallback jika fetch blob terhambat
-      const domImg = document.querySelector('.cert-bg-img');
-      if (domImg && domImg.complete && domImg.naturalWidth > 0) {
-        bgImg = domImg;
-      } else {
-        bgImg = new Image();
-        bgImg.crossOrigin = 'anonymous';
-        await new Promise((resolve, reject) => {
-          bgImg.onload = () => resolve();
-          bgImg.onerror = () => reject(new Error('Gagal memuat gambar sertifikat'));
-          bgImg.src = 'assets-photos/certificate-design.svg';
-        });
-      }
-    }
+    await new Promise((resolve, reject) => {
+      bgImg.onload = () => resolve();
+      bgImg.onerror = (e) => reject(new Error('Gagal memuat template gambar'));
+      bgImg.src = 'assets-photos/certificate-template-hd.png?v=2';
+    });
 
     // ── 2. Render ke 2D Canvas dengan dimensi tepat ───────────────
     const canvas = document.createElement('canvas');
@@ -623,12 +591,8 @@ async function downloadCertificate() {
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, targetWidth, targetHeight);
 
-    // Gambar background SVG template
+    // Gambar background template HD
     ctx.drawImage(bgImg, 0, 0, targetWidth, targetHeight);
-
-    if (blobUrl) {
-      URL.revokeObjectURL(blobUrl);
-    }
 
     // ── 3. Render Nama Kontributor (Cursive Red Font) ─────────────
     const name = (currentContributor.name || '').trim();
