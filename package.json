@@ -1,7 +1,7 @@
 {
   "name": "jinbase-certificate-api",
   "version": "1.0.0",
-  "description": "Backend search API for JINBASE BTS JIN PROJECT E-Certificate \u2014 keeps contributor data server-side.",
+  "description": "Backend search API for JINBASE BTS JIN PROJECT E-Certificate — keeps contributor data server-side.",
   "main": "server.js",
   "type": "commonjs",
   "scripts": {
@@ -10,12 +10,12 @@
   },
   "dependencies": {
     "@napi-rs/canvas": "^1.0.8",
+    "@netlify/blobs": "^11.0.2",
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "express-rate-limit": "^7.4.0",
-    "sharp": "^0.35.4",
-    "@netlify/blobs": "^11.0.2",
-    "serverless-http": "^4.0.0"
+    "serverless-http": "^4.0.0",
+    "sharp": "^0.35.4"
   },
   "engines": {
     "node": ">=22.12.0"
