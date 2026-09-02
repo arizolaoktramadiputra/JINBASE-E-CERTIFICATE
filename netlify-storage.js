@@ -31,7 +31,8 @@ async function getBlobStore() {
     blobStorePromise = Promise.resolve(
       getStore({
         name: STORE_NAME,
-        consistency: 'strong',
+        siteID: process.env.NETLIFY_SITE_ID || process.env.SITE_ID,
+        token: process.env.NETLIFY_AUTH_TOKEN,
       })
     );
   }
@@ -42,10 +43,10 @@ async function getBlobStore() {
 async function readJson(key, fallbackPath) {
   const store = await getBlobStore();
 
+
   if (store) {
     const data = await store.get(blobKeys[key] || key, {
       type: 'json',
-      consistency: 'strong',
     });
 
     if (data !== null) return data;
