@@ -16,6 +16,7 @@ const rateLimit = require('express-rate-limit');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { readJson, writeJson, IS_NETLIFY } = require('./netlify-storage');
 
 // Server last updated: 2026-09-01 (reloaded with 501 contributors)
 const app = express();
@@ -75,24 +76,35 @@ function rebuildCodeMap() {
   buildStatsCache();
 }
 
-function loadContributors() {
+async function loadContributors() {
   try {
-    const raw = fs.readFileSync(DATA_PATH_JSON, 'utf-8');
-    const parsed = JSON.parse(raw);
-    contributors = Array.isArray(parsed.contributors) ? parsed.contributors : [];
+    const parsed = await readJson('contributors', DATA_PATH_JSON);
+    contributors = Array.isArray(parsed?.contributors) ? parsed.contributors : [];
     rebuildCodeMap();
-    console.log(`✅ Loaded ${contributors.length} contributors (server-side only).`);
+    console.log(`✅ Loaded ${contributors.length} contributors ${IS_NETLIFY ? '(Netlify Blobs)' : '(local JSON)'}.`);
     console.log(`✅ Built ${codeMap.size} verification codes.`);
   } catch (err) {
-    console.error('❌ Failed to load contributors.json:', err.message);
+    console.error('❌ Failed to load contributors:', err.message);
     contributors = [];
+    rebuildCodeMap();
+    throw err;
   }
 }
-loadContributors();
 
-function saveContributors() {
+let contributorsLoadPromise = null;
+function ensureContributorsLoaded() {
+  if (!contributorsLoadPromise) {
+    contributorsLoadPromise = loadContributors().catch(err => {
+      contributorsLoadPromise = null;
+      throw err;
+    });
+  }
+  return contributorsLoadPromise;
+}
+
+async function saveContributors() {
   const data = {
-    contributors: contributors,
+    contributors,
     meta: {
       total: contributors.length,
       updated_at: new Date().toISOString(),
@@ -100,23 +112,23 @@ function saveContributors() {
     }
   };
 
-  // 1. Simpan ke JSON
-  fs.writeFileSync(DATA_PATH_JSON, JSON.stringify(data, null, 4), 'utf-8');
+  await writeJson('contributors', data, DATA_PATH_JSON);
 
-  // 2. Simpan ke JS (fallback offline client)
-  const jsContent = `window.CONTRIBUTORS_DATA = ${JSON.stringify(data, null, 4)};\n`;
-  fs.writeFileSync(DATA_PATH_JS, jsContent, 'utf-8');
+  if (!IS_NETLIFY) {
+    const jsContent = `window.CONTRIBUTORS_DATA = ${JSON.stringify(data, null, 4)};\n`;
+    fs.writeFileSync(DATA_PATH_JS, jsContent, 'utf8');
+  }
 
-  // 3. Mutakhirkan memori & cache
   rebuildCodeMap();
 }
+
+ensureContributorsLoaded().catch(() => {});
 
 /* ------------------------------------------------------------
    ADMIN AUTHENTICATION & CONFIGURATION (SINGLE OWNER ACCOUNT)
 ------------------------------------------------------------ */
 const IMMUTABLE_USERNAME = 'jinbase.owner';
 let adminConfig = null;
-const adminSessions = new Map(); // token -> { username, expiresAt }
 const SESSION_TTL_MS = 24 * 60 * 60 * 1000; // 24 jam
 
 function hashPassword(password, salt) {
@@ -128,71 +140,113 @@ function generateRandomKey() {
   return `JB-RECOVERY-${hex}`;
 }
 
-function loadAdminConfig() {
+async function loadAdminConfig() {
   try {
-    if (fs.existsSync(ADMIN_CONFIG_PATH)) {
-      const raw = fs.readFileSync(ADMIN_CONFIG_PATH, 'utf-8');
+    if (!IS_NETLIFY && fs.existsSync(ADMIN_CONFIG_PATH)) {
+      const raw = fs.readFileSync(ADMIN_CONFIG_PATH, 'utf8');
       adminConfig = JSON.parse(raw);
-      // Pastikan username tetap tidak berubah
       adminConfig.username = IMMUTABLE_USERNAME;
-    } else {
-      const salt = crypto.randomBytes(16).toString('hex');
-      const defaultPassword = 'JinbaseAdmin2026!';
-      const passwordHash = hashPassword(defaultPassword, salt);
-      const recoveryKey = generateRandomKey();
-
-      adminConfig = {
-        username: IMMUTABLE_USERNAME,
-        salt,
-        passwordHash,
-        recoveryKey,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-
-      fs.writeFileSync(ADMIN_CONFIG_PATH, JSON.stringify(adminConfig, null, 2), 'utf-8');
-      console.log('🔑 [SECURITY] Admin config initialized.');
-      console.log(`🔑 [SECURITY] Username : ${IMMUTABLE_USERNAME}`);
-      console.log(`🔑 [SECURITY] Password : ${defaultPassword}`);
-      console.log(`🔑 [SECURITY] Recovery Key : ${recoveryKey}`);
+      return;
     }
+
+    if (IS_NETLIFY) {
+      const parsed = await readJson('adminConfig', ADMIN_CONFIG_PATH);
+      adminConfig = parsed || null;
+      if (adminConfig) adminConfig.username = IMMUTABLE_USERNAME;
+      return;
+    }
+
+    const salt = crypto.randomBytes(16).toString('hex');
+    const defaultPassword = process.env.JINBASE_ADMIN_DEFAULT_PASSWORD || 'JinbaseAdmin2026!';
+    const passwordHash = hashPassword(defaultPassword, salt);
+    const recoveryKey = generateRandomKey();
+    adminConfig = {
+      username: IMMUTABLE_USERNAME, salt, passwordHash, recoveryKey,
+      createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
+    };
+    fs.writeFileSync(ADMIN_CONFIG_PATH, JSON.stringify(adminConfig, null, 2), 'utf8');
+    console.log('🔑 [SECURITY] Admin config initialized locally.');
   } catch (err) {
     console.error('❌ Failed to load/create admin config:', err.message);
-  }
-}
-loadAdminConfig();
-
-function cleanExpiredSessions() {
-  const now = Date.now();
-  for (const [token, session] of adminSessions.entries()) {
-    if (session.expiresAt <= now) {
-      adminSessions.delete(token);
-    }
+    throw err;
   }
 }
 
-function requireAdminAuth(req, res, next) {
-  cleanExpiredSessions();
-  const authHeader = req.headers['authorization'] || '';
-  let token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : null;
-  if (!token) {
-    token = req.headers['x-admin-token'] || req.query.token;
+let adminConfigLoadPromise = null;
+function ensureAdminConfigLoaded() {
+  if (!adminConfigLoadPromise) {
+    adminConfigLoadPromise = loadAdminConfig().catch(err => {
+      adminConfigLoadPromise = null;
+      throw err;
+    });
   }
+  return adminConfigLoadPromise;
+}
 
-  if (!token || !adminSessions.has(token)) {
-    return res.status(401).json({ error: 'Akses ditolak. Silakan login terlebih dahulu.' });
+async function saveAdminConfig() {
+  adminConfig.username = IMMUTABLE_USERNAME;
+  await writeJson('adminConfig', adminConfig, ADMIN_CONFIG_PATH);
+}
+
+ensureAdminConfigLoaded().catch(() => {});
+
+function base64UrlEncode(value) {
+  return Buffer.from(value).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+}
+
+function base64UrlDecode(value) {
+  const padded = value.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - value.length % 4) % 4);
+  return Buffer.from(padded, 'base64').toString('utf8');
+}
+
+function getSessionSecret() {
+  return process.env.ADMIN_SESSION_SECRET || `${IMMUTABLE_USERNAME}:${adminConfig?.passwordHash || 'not-ready'}`;
+}
+
+function createSessionToken() {
+  const payload = {
+    username: IMMUTABLE_USERNAME,
+    exp: Date.now() + SESSION_TTL_MS,
+    pv: (adminConfig.passwordHash || '').slice(0, 24),
+    nonce: crypto.randomBytes(8).toString('hex'),
+  };
+  const encoded = base64UrlEncode(JSON.stringify(payload));
+  const signature = crypto.createHmac('sha256', getSessionSecret()).update(encoded).digest('base64url');
+  return `${encoded}.${signature}`;
+}
+
+function verifySessionToken(token) {
+  try {
+    const [encoded, signature] = String(token || '').split('.');
+    if (!encoded || !signature) return null;
+    const expected = crypto.createHmac('sha256', getSessionSecret()).update(encoded).digest('base64url');
+    const a = Buffer.from(signature);
+    const b = Buffer.from(expected);
+    if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
+    const payload = JSON.parse(base64UrlDecode(encoded));
+    if (payload.username !== IMMUTABLE_USERNAME) return null;
+    if (payload.exp <= Date.now()) return null;
+    if (payload.pv !== (adminConfig.passwordHash || '').slice(0, 24)) return null;
+    return payload;
+  } catch (_) {
+    return null;
   }
+}
 
-  const session = adminSessions.get(token);
-  if (session.expiresAt <= Date.now()) {
-    adminSessions.delete(token);
-    return res.status(401).json({ error: 'Sesi login telah berakhir. Silakan login kembali.' });
+async function requireAdminAuth(req, res, next) {
+  try {
+    await ensureAdminConfigLoaded();
+    const authHeader = req.headers['authorization'] || '';
+    let token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : null;
+    if (!token) token = req.headers['x-admin-token'] || req.query.token;
+    const session = verifySessionToken(token);
+    if (!session) return res.status(401).json({ error: 'Akses ditolak atau sesi telah berakhir. Silakan login kembali.' });
+    req.adminUser = session;
+    next();
+  } catch (err) {
+    console.error('❌ Admin auth error:', err);
+    return res.status(500).json({ error: 'Konfigurasi autentikasi server tidak dapat dimuat.' });
   }
-
-  // Perpanjang sesi jika aktif
-  session.expiresAt = Date.now() + SESSION_TTL_MS;
-  req.adminUser = session;
-  next();
 }
 
 /* ------------------------------------------------------------
@@ -226,20 +280,40 @@ const adminAuthLimiter = rateLimit({
   message: { error: 'Terlalu banyak percobaan login/recovery. Coba lagi dalam 15 menit.' },
 });
 
+app.use(async (req, res, next) => {
+  const needsContributors =
+    req.path === '/api/stats' ||
+    req.path === '/api/search' ||
+    req.path.startsWith('/verify/') ||
+    req.path.startsWith('/v/') ||
+    req.path === '/api/admin/contributors' ||
+    req.path.startsWith('/api/admin/contributors/');
+
+  if (!needsContributors) return next();
+  try {
+    await ensureContributorsLoaded();
+    await loadContributors();
+    next();
+  } catch (err) {
+    console.error('❌ Persistent contributor storage error:', err);
+    return res.status(500).json({ error: 'Storage contributor tidak dapat diakses.' });
+  }
+});
+
 // Lindungi folder data dan file internal
 app.use('/data', (req, res) => res.status(403).send('Forbidden'));
 app.get(['/server.js', '/package.json', '/package-lock.json'], (req, res) => res.status(403).send('Forbidden'));
 
 // Sajikan rute khusus admin
 app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+  res.sendFile(path.join(__dirname, 'admin.html'));
 });
 app.get('/owner', (req, res) => {
   res.redirect('/admin');
 });
 
 // Sajikan file statis frontend
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(__dirname));
 
 /* ------------------------------------------------------------
    HELPERS
@@ -823,7 +897,8 @@ app.post('/api/search', searchLimiter, (req, res) => {
 ------------------------------------------------------------ */
 
 // 1. Admin Login
-app.post('/api/admin/login', adminAuthLimiter, (req, res) => {
+app.post('/api/admin/login', adminAuthLimiter, async (req, res) => {
+  await ensureAdminConfigLoaded();
   const { username, password } = req.body || {};
 
   if (!username || !password) {
@@ -839,13 +914,7 @@ app.post('/api/admin/login', adminAuthLimiter, (req, res) => {
     return res.status(401).json({ error: 'Password yang Anda masukkan salah.' });
   }
 
-  // Generate secure token
-  const token = crypto.randomBytes(32).toString('hex');
-  adminSessions.set(token, {
-    username: IMMUTABLE_USERNAME,
-    expiresAt: Date.now() + SESSION_TTL_MS,
-    createdAt: new Date().toISOString()
-  });
+  const token = createSessionToken();
 
   return res.json({
     ok: true,
@@ -858,19 +927,13 @@ app.post('/api/admin/login', adminAuthLimiter, (req, res) => {
 
 // 2. Admin Logout
 app.post('/api/admin/logout', requireAdminAuth, (req, res) => {
-  const authHeader = req.headers['authorization'] || '';
-  let token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : null;
-  if (!token) token = req.headers['x-admin-token'] || req.query.token;
-
-  if (token && adminSessions.has(token)) {
-    adminSessions.delete(token);
-  }
-
+  // Token bersifat stateless; logout dilakukan dengan menghapus token di browser.
   return res.json({ ok: true, message: 'Logout berhasil.' });
 });
 
 // 3. Admin Check Session
-app.get('/api/admin/me', requireAdminAuth, (req, res) => {
+app.get('/api/admin/me', requireAdminAuth, async (req, res) => {
+  await ensureAdminConfigLoaded();
   if (!statsCache) buildStatsCache();
   return res.json({
     ok: true,
@@ -881,7 +944,8 @@ app.get('/api/admin/me', requireAdminAuth, (req, res) => {
 });
 
 // 4. Admin Change Password (in dashboard)
-app.post('/api/admin/change-password', requireAdminAuth, (req, res) => {
+app.post('/api/admin/change-password', requireAdminAuth, async (req, res) => {
+  await ensureAdminConfigLoaded();
   const { currentPassword, newPassword } = req.body || {};
 
   if (!currentPassword || !newPassword) {
@@ -903,7 +967,7 @@ app.post('/api/admin/change-password', requireAdminAuth, (req, res) => {
   adminConfig.passwordHash = hashPassword(newPassword, newSalt);
   adminConfig.updatedAt = new Date().toISOString();
 
-  fs.writeFileSync(ADMIN_CONFIG_PATH, JSON.stringify(adminConfig, null, 2), 'utf-8');
+  await saveAdminConfig();
 
   return res.json({
     ok: true,
@@ -912,7 +976,8 @@ app.post('/api/admin/change-password', requireAdminAuth, (req, res) => {
 });
 
 // 5. Admin Forgot Password (with Recovery Key)
-app.post('/api/admin/forgot-password', adminAuthLimiter, (req, res) => {
+app.post('/api/admin/forgot-password', adminAuthLimiter, async (req, res) => {
+  await ensureAdminConfigLoaded();
   const { recoveryKey, newPassword } = req.body || {};
 
   if (!recoveryKey || !newPassword) {
@@ -937,10 +1002,9 @@ app.post('/api/admin/forgot-password', adminAuthLimiter, (req, res) => {
   adminConfig.recoveryKey = nextRecoveryKey;
   adminConfig.updatedAt = new Date().toISOString();
 
-  fs.writeFileSync(ADMIN_CONFIG_PATH, JSON.stringify(adminConfig, null, 2), 'utf-8');
+  await saveAdminConfig();
 
-  // Clear all sessions for security
-  adminSessions.clear();
+  // Signed stateless sessions are invalidated automatically because passwordHash changed.
 
   return res.json({
     ok: true,
@@ -950,7 +1014,8 @@ app.post('/api/admin/forgot-password', adminAuthLimiter, (req, res) => {
 });
 
 // 6. Get Current Recovery Key (for authenticated admin)
-app.get('/api/admin/recovery-key', requireAdminAuth, (req, res) => {
+app.get('/api/admin/recovery-key', requireAdminAuth, async (req, res) => {
+  await ensureAdminConfigLoaded();
   return res.json({
     ok: true,
     recoveryKey: adminConfig.recoveryKey || 'JB-RECOVERY-DEFAULT',
@@ -959,11 +1024,12 @@ app.get('/api/admin/recovery-key', requireAdminAuth, (req, res) => {
 });
 
 // 7. Regenerate Recovery Key (for authenticated admin)
-app.post('/api/admin/regenerate-recovery-key', requireAdminAuth, (req, res) => {
+app.post('/api/admin/regenerate-recovery-key', requireAdminAuth, async (req, res) => {
+  await ensureAdminConfigLoaded();
   const nextRecoveryKey = generateRandomKey();
   adminConfig.recoveryKey = nextRecoveryKey;
   adminConfig.updatedAt = new Date().toISOString();
-  fs.writeFileSync(ADMIN_CONFIG_PATH, JSON.stringify(adminConfig, null, 2), 'utf-8');
+  await saveAdminConfig();
 
   return res.json({
     ok: true,
@@ -1000,10 +1066,10 @@ app.get('/api/admin/contributors', requireAdminAuth, (req, res) => {
       const code = generateVerifyCode(c).toLowerCase();
 
       return name.includes(query) ||
-        email.includes(query) ||
-        id.includes(query) ||
-        code.includes(query) ||
-        (qKey && (stripKey(name).includes(qKey) || stripKey(email).includes(qKey)));
+             email.includes(query) ||
+             id.includes(query) ||
+             code.includes(query) ||
+             (qKey && (stripKey(name).includes(qKey) || stripKey(email).includes(qKey)));
     });
   }
 
@@ -1056,7 +1122,7 @@ app.get('/api/admin/contributors', requireAdminAuth, (req, res) => {
 });
 
 // 9. Admin Add Contributor
-app.post('/api/admin/contributors', requireAdminAuth, (req, res) => {
+app.post('/api/admin/contributors', requireAdminAuth, async (req, res) => {
   const { name, email, contribution_type, amount, id, is_participant } = req.body || {};
 
   if (!name || typeof name !== 'string' || !name.trim()) {
@@ -1107,7 +1173,7 @@ app.post('/api/admin/contributors', requireAdminAuth, (req, res) => {
 
   // Tambahkan ke database (urutan paling awal atau paling akhir)
   contributors.push(newContributor);
-  saveContributors();
+  await saveContributors();
 
   const code = generateVerifyCode(newContributor);
 
@@ -1123,7 +1189,7 @@ app.post('/api/admin/contributors', requireAdminAuth, (req, res) => {
 });
 
 // 10. Admin Update Contributor
-app.put('/api/admin/contributors/:id', requireAdminAuth, (req, res) => {
+app.put('/api/admin/contributors/:id', requireAdminAuth, async (req, res) => {
   const targetId = String(req.params.id || '').trim();
   const { name, email, contribution_type, amount, is_participant } = req.body || {};
 
@@ -1164,7 +1230,7 @@ app.put('/api/admin/contributors/:id', requireAdminAuth, (req, res) => {
     contributors[idx].is_participant = !!is_participant;
   }
 
-  saveContributors();
+  await saveContributors();
 
   const code = generateVerifyCode(contributors[idx]);
 
@@ -1180,7 +1246,7 @@ app.put('/api/admin/contributors/:id', requireAdminAuth, (req, res) => {
 });
 
 // 11. Admin Delete Contributor
-app.delete('/api/admin/contributors/:id', requireAdminAuth, (req, res) => {
+app.delete('/api/admin/contributors/:id', requireAdminAuth, async (req, res) => {
   const targetId = String(req.params.id || '').trim();
   const idx = contributors.findIndex(c => String(c.id).toLowerCase() === targetId.toLowerCase());
 
@@ -1189,7 +1255,7 @@ app.delete('/api/admin/contributors/:id', requireAdminAuth, (req, res) => {
   }
 
   const deleted = contributors.splice(idx, 1)[0];
-  saveContributors();
+  await saveContributors();
 
   return res.json({
     ok: true,
