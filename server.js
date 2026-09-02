@@ -232,14 +232,14 @@ app.get(['/server.js', '/package.json', '/package-lock.json'], (req, res) => res
 
 // Sajikan rute khusus admin
 app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'admin.html'));
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 app.get('/owner', (req, res) => {
   res.redirect('/admin');
 });
 
 // Sajikan file statis frontend
-app.use(express.static(__dirname));
+app.use(express.static(path.join(__dirname, 'public')));
 
 /* ------------------------------------------------------------
    HELPERS
@@ -1000,10 +1000,10 @@ app.get('/api/admin/contributors', requireAdminAuth, (req, res) => {
       const code = generateVerifyCode(c).toLowerCase();
 
       return name.includes(query) ||
-             email.includes(query) ||
-             id.includes(query) ||
-             code.includes(query) ||
-             (qKey && (stripKey(name).includes(qKey) || stripKey(email).includes(qKey)));
+        email.includes(query) ||
+        id.includes(query) ||
+        code.includes(query) ||
+        (qKey && (stripKey(name).includes(qKey) || stripKey(email).includes(qKey)));
     });
   }
 
@@ -1202,14 +1202,18 @@ app.delete('/api/admin/contributors/:id', requireAdminAuth, (req, res) => {
 /* ------------------------------------------------------------
    START
 ------------------------------------------------------------ */
-app.listen(PORT, () => {
-  console.log(`🚀 JINBASE API running at http://localhost:${PORT}`);
-  console.log(`   /                 — Public search & appreciation certificates`);
-  console.log(`   /admin            — Owner / Admin Dashboard (Secret Access)`);
-  console.log(`   /api/search       — fuzzy email search`);
-  console.log(`   /api/stats        — live stats`);
-  console.log(`   /verify/:code     — JSON cert verification`);
-  console.log(`   /v/:code          — public verification page`);
-  console.log(`   /v/:code/og-image.png — dynamic OG image`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`🚀 JINBASE API running at http://localhost:${PORT}`);
+    console.log(`   /                 — Public search & appreciation certificates`);
+    console.log(`   /admin            — Owner / Admin Dashboard (Secret Access)`);
+    console.log(`   /api/search       — fuzzy email search`);
+    console.log(`   /api/stats        — live stats`);
+    console.log(`   /verify/:code     — JSON cert verification`);
+    console.log(`   /v/:code          — public verification page`);
+    console.log(`   /v/:code/og-image.png — dynamic OG image`);
+  });
+}
+
+module.exports = app;
 

@@ -7,7 +7,7 @@
 /* ============================================================
    BACKEND API CONFIG
    ============================================================ */
-const API_BASE_URL = window.JINBASE_API_URL || 'http://localhost:3000';
+const API_BASE_URL = window.JINBASE_API_URL || '';
 
 let dataLoaded = true;
 let currentContributor = null;
@@ -61,7 +61,7 @@ async function ensureContributorsLoaded() {
           return list;
         }
       }
-    } catch (_) {}
+    } catch (_) { }
   }
   return [];
 }
@@ -555,7 +555,7 @@ async function downloadCertificate() {
       const A4_W_MM = 297;
       const A4_H_MM = 210;
       const RENDER_SCALE = 6;  // px per mm
-      const targetWidth  = A4_W_MM * RENDER_SCALE;  // 1782 px
+      const targetWidth = A4_W_MM * RENDER_SCALE;  // 1782 px
       const targetHeight = A4_H_MM * RENDER_SCALE;  // 1260 px
 
       // ── Kontainer offscreen dengan dimensi tepat A4 ───────────────
@@ -646,7 +646,7 @@ async function downloadCertificate() {
 
       // ── Re-draw ke canvas baru dengan dimensi PERSIS untuk elim subpixel ──
       const finalCanvas = document.createElement('canvas');
-      finalCanvas.width  = targetWidth;
+      finalCanvas.width = targetWidth;
       finalCanvas.height = targetHeight;
       const ctx = finalCanvas.getContext('2d');
       ctx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, targetWidth, targetHeight);
@@ -1081,7 +1081,7 @@ if (brandBadge) {
   brandBadge.addEventListener('click', () => {
     badgeClickCount++;
     if (badgeClickTimer) clearTimeout(badgeClickTimer);
-    
+
     if (badgeClickCount >= 3) {
       badgeClickCount = 0;
       window.location.href = '/admin';
